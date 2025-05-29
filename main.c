@@ -3,12 +3,18 @@
 #include <math.h>
 #include "output.h"
 #include "data.h"
+#include "input.h"
 
 int main() {
 	
 	
 	//game vars
     Vector3 player = {7.0f, 7.0f, 0.0f};
+    Vector2 enemy[ENEMY_AMOUNT] = {
+    	{7.0f, 14.0f},
+    	{0.0f, 0.0f},
+    	{0.0f, 0.0f}
+	};
 	char map[MAP_HEIGHT][MAP_WIDTH] = {
     	"################",
     	"#..............#",
@@ -29,17 +35,17 @@ int main() {
 	};
 	
 	
-	
 	//timer vars
 	LARGE_INTEGER freq, start, end;
 	QueryPerformanceFrequency(&freq);
 	float elapsed;
 	
-	//output vars
+	//output/input vars
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     HANDLE hBuffer[2];
     int currentBuffer = 0, backBuffer;
     DWORD dwBytesWritten = 0;
+    InputState input;
     
     
     //buffers init
@@ -54,8 +60,12 @@ int main() {
     	
     	backBuffer = 1 - currentBuffer;
     	
-        player.z += M_PI / (36 * 60);
-        render_frame(hBuffer[backBuffer], player, map);
+        
+        render_frame(hBuffer[backBuffer], player, map, enemy);
+        update_input(&input);
+        
+        if (input.a) player.z -= M_PI / (36 * 15);
+        if (input.d) player.z += M_PI / (36 * 15);
         
         SetConsoleActiveScreenBuffer(hBuffer[backBuffer]);
         currentBuffer = backBuffer;

@@ -7,7 +7,8 @@
 void render_frame(
 	const HANDLE buffer, 
 	const Vector3 player, 
-	const char map[MAP_HEIGHT][MAP_WIDTH]
+	const char map[MAP_HEIGHT][MAP_WIDTH],
+	const Vector2 enemy[ENEMY_AMOUNT]
 );
 
 #endif
