@@ -4,6 +4,7 @@
 #include "output.h"
 #include "data.h"
 #include "input.h"
+#include "game.h"
 
 int main() {
 	
@@ -53,20 +54,18 @@ int main() {
     hBuffer[1] = CreateConsoleScreenBuffer(GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
     SetConsoleActiveScreenBuffer(hBuffer[0]);
     
-    
+    initializeGame(map, &player, enemy);
+
     //main game loop
     while (1) {
     	QueryPerformanceCounter(&start);
     	
     	backBuffer = 1 - currentBuffer;
-    	
         
         render_frame(hBuffer[backBuffer], player, map, enemy);
         update_input(&input);
-        
-        if (input.a) player.z -= M_PI / (36 * 15);
-        if (input.d) player.z += M_PI / (36 * 15);
-        
+        updateGame(map, &player, enemy, &input, FRAME_TIME_MS / 1000.0f);
+
         SetConsoleActiveScreenBuffer(hBuffer[backBuffer]);
         currentBuffer = backBuffer;
         
