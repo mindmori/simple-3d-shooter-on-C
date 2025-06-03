@@ -1,4 +1,4 @@
-#include <math.h>
+#include <windows.h>
 
 #ifndef DATA_H
 #define DATA_H
@@ -11,6 +11,8 @@
 #define MAX_DEPTH 16.0f
 #define SCREEN_WIDTH 120
 #define SCREEN_HEIGHT 30
+#define TITLE_WIDTH 16
+#define TITLE_HEIGHT 4
 
 #define ENEMY_AMOUNT 3
 #define ENEMY_VIEW_DISTANCE 10
@@ -31,5 +33,34 @@ typedef struct{
 	float z;
 } Vector3;
 
+typedef struct{
+	Vector2 pos;
+	float angle;
+	int score;
+	float time;
+} Player;
+
+typedef struct {
+    int w;
+    int a;
+    int s;
+    int d;
+    int q;
+    int e;
+} InputState;
+
+typedef enum {
+	INIT,
+	REINIT,
+	MENU,
+	RUNNING,
+	DEAD
+} GameState;
+
+typedef struct {
+	HANDLE buffer[2];
+	int current;
+	int back;
+} Screen;
 
 #endif

@@ -4,18 +4,16 @@
 #include "output.h"
 #include "data.h"
 #include "input.h"
-#include "game.h"
+//#include "game.h"
 
 int main() {
 	
 	
 	//game vars
-    Vector3 player = {7.0f, 7.0f, 0.0f};
-    Vector2 enemy[ENEMY_AMOUNT] = {
-    	{7.0f, 14.0f},
-    	{0.0f, 0.0f},
-    	{0.0f, 0.0f}
-	};
+    Player player;
+    Vector2 enemy[ENEMY_AMOUNT];
+    GameState state;
+    int menuState;
 	char map[MAP_HEIGHT][MAP_WIDTH] = {
     	"################",
     	"#..............#",
@@ -41,40 +39,52 @@ int main() {
 	QueryPerformanceFrequency(&freq);
 	float elapsed;
 	
-	//output/input vars
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    HANDLE hBuffer[2];
-    int currentBuffer = 0, backBuffer;
-    DWORD dwBytesWritten = 0;
+	
+	//input/output vars
     InputState input;
+    Screen screen;
     
     
-    //buffers init
-    hBuffer[0] = CreateConsoleScreenBuffer(GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-    hBuffer[1] = CreateConsoleScreenBuffer(GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-    SetConsoleActiveScreenBuffer(hBuffer[0]);
-    
-    initializeGame(map, &player, enemy);
-
     //main game loop
+    state = INIT;
     while (1) {
-    	QueryPerformanceCounter(&start);
-    	
-    	backBuffer = 1 - currentBuffer;
-        
-        render_frame(hBuffer[backBuffer], player, map, enemy);
-        update_input(&input);
-        updateGame(map, &player, enemy, &input, FRAME_TIME_MS / 1000.0f);
-
-        SetConsoleActiveScreenBuffer(hBuffer[backBuffer]);
-        currentBuffer = backBuffer;
-        
-        
-        //framerate control
-        QueryPerformanceCounter(&end);
-        elapsed = (end.QuadPart - start.QuadPart) * 1000.0f / freq.QuadPart;
-        if (elapsed < FRAME_TIME_MS)
-    		Sleep(FRAME_TIME_MS - elapsed);
+    	switch (state){
+    		
+    		
+    		case INIT:
+    			screen_init(&screen);
+				menuState = 0;
+				//initializeGame(map, &player, enemy);
+				state = MENU;
+				menuState = 0;
+				break;
+				
+			case REINIT:
+    			//initializeGame(map, &player, enemy);
+    			state = MENU;
+    			menuState = 0;
+    			break;
+    			
+    		case MENU:
+    			render_menu(&screen, state, player.score, &menuState, &input);
+    			update_input(&input);
+    			break;
+    		
+    		
+    		case RUNNING:
+    			QueryPerformanceCounter(&start);
+    			
+        		//render_screen(&screen, player, map, enemy);
+        		update_input(&input);
+				//updateGame(map, &player, enemy, &input, FRAME_TIME_MS / 1000.0f);
+        		
+				QueryPerformanceCounter(&end);
+        		elapsed = (end.QuadPart - start.QuadPart) * 1000.0f / freq.QuadPart;
+        		player.time += elapsed;
+        		if (elapsed < FRAME_TIME_MS)
+    				Sleep(FRAME_TIME_MS - elapsed);
+    			break;
+		}
     }
     
     return 0;
