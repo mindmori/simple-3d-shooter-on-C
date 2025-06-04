@@ -1,5 +1,7 @@
 #include "gamemap.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 GameMap *loadMapFromFile(const char *filename)
 {

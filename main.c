@@ -4,6 +4,7 @@
 #include "output.h"
 #include "data.h"
 #include "input.h"
+#include "gamemap.h"
 #include "game.h"
 
 int main() {
@@ -16,24 +17,25 @@ int main() {
     	{0.0f, 0.0f},
     	{0.0f, 0.0f}
 	};
-	char map[MAP_HEIGHT][MAP_WIDTH] = {
-    	"################",
-    	"#..............#",
-    	"#.......########",
-    	"#..............#",
-    	"#......##......#",
-    	"#......##......#",
-    	"#..............#",
-    	"###............#",
-    	"##.............#",
-    	"#......####..###",
-    	"#......#.......#",
-    	"#......#.......#",
-    	"#..............#",
-    	"#......#########",
-    	"#..............#",
-    	"################"
-	};
+	GameMap map;
+//	char map[MAP_HEIGHT][MAP_WIDTH] = {
+//    	"################",
+//    	"#..............#",
+//    	"#.......########",
+//    	"#..............#",
+//    	"#......##......#",
+//    	"#......##......#",
+//    	"#..............#",
+//    	"###............#",
+//    	"##.............#",
+//    	"#......####..###",
+//    	"#......#.......#",
+//    	"#......#.......#",
+//    	"#..............#",
+//    	"#......#########",
+//    	"#..............#",
+//    	"################"
+//	};
 	
 	
 	//timer vars
@@ -54,7 +56,8 @@ int main() {
     hBuffer[1] = CreateConsoleScreenBuffer(GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
     SetConsoleActiveScreenBuffer(hBuffer[0]);
     
-    initializeGame(map, &player, enemy);
+    map = *loadMapFromFile("map.txt");
+    initializeGame(&map, &player, enemy);
 
     //main game loop
     while (1) {
@@ -64,7 +67,7 @@ int main() {
         
         render_frame(hBuffer[backBuffer], player, map, enemy);
         update_input(&input);
-        updateGame(map, &player, enemy, &input, FRAME_TIME_MS / 1000.0f);
+        updateGame(&map, &player, enemy, &input, FRAME_TIME_MS / 1000.0f);
 
         SetConsoleActiveScreenBuffer(hBuffer[backBuffer]);
         currentBuffer = backBuffer;

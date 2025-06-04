@@ -1,3 +1,5 @@
+#include "gamemap.h"
+
 #ifndef GAME_H
 #define GAME_H
 
