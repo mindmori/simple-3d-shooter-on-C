@@ -1,40 +1,42 @@
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
-#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
 #include "data.h"
 #include "input.h"
 #include "game.h"
+#include "gamemap.h"
 
-int canMove(const char map[MAP_HEIGHT][MAP_WIDTH], float x, float y)
+int canMove(const GameMap *map, float x, float y)
 {
     int mapX = (int)x;
     int mapY = (int)y;
 
-    if (mapX < 0 || mapX >= MAP_WIDTH || mapY < 0 || mapY >= MAP_HEIGHT)
+    if (mapX < 0 || mapX >= map->width || mapY < 0 || mapY >= map->height)
     {
         return 0;
     }
 
-    return map[mapY][mapX] != '#';
+    return map->data[mapY][mapX] != '#';
 }
 
-void respawnEnemy(const char map[MAP_HEIGHT][MAP_WIDTH], Vector2 *enemy)
+void respawnEnemy(const GameMap *map, Vector2 *enemy)
 {
     do
     {
-        enemy->x = 2.0f + rand() % (MAP_WIDTH - 4);
-        enemy->y = 2.0f + rand() % (MAP_HEIGHT - 4);
+        enemy->x = 2.0f + rand() % (map->width - 4);
+        enemy->y = 2.0f + rand() % (map->height - 4);
     } while (!canMove(map, enemy->x, enemy->y));
 }
 
-void initializeGame(const char map[MAP_HEIGHT][MAP_WIDTH], Vector3 *player, Vector2 enemies[ENEMY_AMOUNT])
+void initializeGame(GameMap *map, Vector3 *player, Vector2 enemies[ENEMY_AMOUNT])
 {
     player->x = 1.5f;
     player->y = 1.5f;
     player->z = 0.0f;
 
-    srand(time(NULL)); // Задаю сид рандому
+    srand(time(NULL));
     for (int i = 0; i < ENEMY_AMOUNT; i++)
     {
         respawnEnemy(map, &(enemies[i]));
@@ -51,7 +53,7 @@ void rotatePlayer(Vector3 *player, float angle)
     }
 }
 
-void movePlayerInDirection(const char map[MAP_HEIGHT][MAP_WIDTH], Vector3 *player, int direction)
+void movePlayerInDirection(const GameMap *map, Vector3 *player, int direction)
 {
     float newX = player->x + direction * cos(player->z) * PLAYER_MS;
     float newY = player->y + direction * sin(player->z) * PLAYER_MS;
@@ -65,8 +67,7 @@ void movePlayerInDirection(const char map[MAP_HEIGHT][MAP_WIDTH], Vector3 *playe
     }
 }
 
-void updateEnemies(const char map[MAP_HEIGHT][MAP_WIDTH], Vector3 *player, Vector2 enemies[ENEMY_AMOUNT])
-
+void updateEnemies(const GameMap *map, Vector3 *player, Vector2 enemies[ENEMY_AMOUNT])
 {
     for (int i = 0; i < ENEMY_AMOUNT; i++)
     {
@@ -93,7 +94,7 @@ void updateEnemies(const char map[MAP_HEIGHT][MAP_WIDTH], Vector3 *player, Vecto
     }
 }
 
-void fire(const char map[MAP_HEIGHT][MAP_WIDTH], Vector3* player, Vector2 enemies[ENEMY_AMOUNT])
+void fire(const GameMap *map, Vector3 *player, Vector2 enemies[ENEMY_AMOUNT])
 {
     float distanceToWall = 0;
     int hitWall = 0;
@@ -110,7 +111,7 @@ void fire(const char map[MAP_HEIGHT][MAP_WIDTH], Vector3* player, Vector2 enemie
         int testX = (int)testfX;
         int testY = (int)testfY;
 
-        if (testX >= 0 && testX < MAP_WIDTH && testY >= 0 && testY < MAP_HEIGHT)
+        if (testX >= 0 && testX < map->width && testY >= 0 && testY < map->height)
         {
             for (int i = 0; i < ENEMY_AMOUNT; i++)
             {
@@ -122,11 +123,11 @@ void fire(const char map[MAP_HEIGHT][MAP_WIDTH], Vector3* player, Vector2 enemie
                 {
                     hitEnemy = 1;
                     respawnEnemy(map, &(enemies[i]));
-                    break; 
+                    break;
                 }
             }
 
-            if (map[testY][testX] == '#')
+            if (map->data[testY][testX] == '#')
             {
                 hitWall = 1;
             }
@@ -139,7 +140,7 @@ void fire(const char map[MAP_HEIGHT][MAP_WIDTH], Vector3* player, Vector2 enemie
 }
 
 void updateGame(
-    const char map[MAP_HEIGHT][MAP_WIDTH],
+    GameMap *map,
     Vector3 *player,
     Vector2 enemies[ENEMY_AMOUNT],
     const InputState *input,
