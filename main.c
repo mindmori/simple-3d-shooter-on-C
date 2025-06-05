@@ -17,17 +17,16 @@ int main() {
 	
 	//game vars
     Player player;
-    Vector3 playerV;
     Vector2 enemy[ENEMY_AMOUNT] = {
     	{7.0f, 14.0f},
     	{0.0f, 0.0f},
     	{0.0f, 0.0f}
 	};
-	int finalScore;
+	int finalScore = -1;
 	GameMap map;
 	GameState state;
 	int menuChoice = 0;
-	float btnCD = MENU_CD_MS;
+	player.cooldown = MENU_CD_MS;
 	
 	
 	//timer vars
@@ -51,13 +50,13 @@ int main() {
     			initConsoleBuffer(&cb, 120, 30);
     			clearBuffer(&cb, ' ', WHITE);
     			map = *loadMapFromFile("map.txt");
-    			initializeGame(&map, &playerV, enemy);
+    			initializeGame(&map, &player, enemy);
     			state = MENU;
-    			finalScore = 0;
 				break;
 			
 			case REINIT:
-				initializeGame(&map, &playerV, enemy);
+    			finalScore = player.score;
+				initializeGame(&map, &player, enemy);
 				clearBuffer(&cb, ' ', WHITE);
 				state = MENU;
 				break;
@@ -74,30 +73,27 @@ int main() {
 						
 				}
 				
-				if ((input.w || input.s) && btnCD <= 0){
+				if ((input.w || input.s) && player.cooldown  <= 0){
 					menuChoice = 1 - menuChoice;
-					btnCD = MENU_CD_MS;
+					player.cooldown  = MENU_CD_MS;
 				}
 				
 				render_menu(&cb, finalScore, menuChoice);
 				break;
 			
 			case RUNNING:
-    			finalScore = 1;
     			render_frame(&cb, player.pos, player.angle, player.score, map, enemy);
         		update_input(&input);
-        		updateGame(&map, &playerV, enemy, &input, DELTA_TIME, &state);
+        		updateGame(&map, &player, enemy, &input, &state);
         
-        		player.pos = (Vector2) {playerV.x, playerV.y};
-        		player.angle = playerV.z;
     			break;
 		}
 		
 		//framerate control
 		QueryPerformanceCounter(&end);
         elapsed = (end.QuadPart - start.QuadPart) * 1000.0f / freq.QuadPart;
-        if (btnCD > 0)
-        	btnCD -= FRAME_TIME_MS;
+        if (player.cooldown  > 0)
+        	player.cooldown  -= FRAME_TIME_MS;
         if (elapsed < FRAME_TIME_MS)
     		Sleep(FRAME_TIME_MS - elapsed);
     }

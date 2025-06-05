@@ -21,59 +21,68 @@ int canMove(const GameMap *map, float x, float y)
     return map->data[mapY][mapX] != '#';
 }
 
-void respawnEnemy(const GameMap *map, Vector2 *enemy)
+double calculateDistanceToPlayer(Player *player, Vector2 enemy)
+{
+    float dx = player->pos.x - enemy.x;
+    float dy = player->pos.y - enemy.y;
+    return sqrt(pow(dx, 2) + pow(dy, 2));
+}
+
+void respawnEnemy(const GameMap *map, Vector2 *enemy, Player *player)
 {
     do
     {
         enemy->x = 2.0f + rand() % (map->width - 4);
         enemy->y = 2.0f + rand() % (map->height - 4);
-    } while (!canMove(map, enemy->x, enemy->y));
+    } while (!canMove(map, enemy->x, enemy->y) || (calculateDistanceToPlayer(player, *enemy) < map->width / 3));
 }
 
-void initializeGame(GameMap *map, Vector3 *player, Vector2 enemies[ENEMY_AMOUNT])
+void initializeGame(GameMap *map, Player *player, Vector2 enemies[ENEMY_AMOUNT])
 {
-    player->x = 1.5f;
-    player->y = 1.5f;
-    player->z = 0.0f;
+    player->pos.x = 1.5f;
+    player->pos.y = 1.5f;
+    player->angle = 0.0f;
+    player->score = 0;
 
     srand(time(NULL));
     for (int i = 0; i < ENEMY_AMOUNT; i++)
     {
-        respawnEnemy(map, &(enemies[i]));
+        respawnEnemy(map, &(enemies[i]), player);
     }
 }
 
-void rotatePlayer(Vector3 *player, float angle)
+void rotatePlayer(Player *player, float angle)
 {
-    player->z += angle;
-    player->z = fmod(player->z, 2 * M_PI);
-    if (player->z <= 0)
+    player->angle += angle;
+    player->angle = fmod(player->angle, 2 * M_PI);
+    if (player->angle <= 0)
     {
-        player->z += 2 * M_PI;
+        player->angle += 2 * M_PI;
     }
 }
 
-void movePlayerInDirection(const GameMap *map, Vector3 *player, int direction)
+void movePlayerInDirection(const GameMap *map, Player *player, int direction)
 {
-    float newX = player->x + direction * cos(player->z) * PLAYER_MS;
-    float newY = player->y + direction * sin(player->z) * PLAYER_MS;
-    if (canMove(map, newX, player->y))
+    float newX = player->pos.x + direction * cos(player->angle) * PLAYER_MS;
+    float newY = player->pos.y + direction * sin(player->angle) * PLAYER_MS;
+    if (canMove(map, newX, player->pos.y))
     {
-        player->x = newX;
+        player->pos.x = newX;
     }
-    if (canMove(map, player->x, newY))
+    if (canMove(map, player->pos.x, newY))
     {
-        player->y = newY;
+        player->pos.y = newY;
     }
 }
 
-void updateEnemies(const GameMap *map, Vector3 *player, Vector2 enemies[ENEMY_AMOUNT], GameState* state)
+
+void updateEnemies(const GameMap *map, Player *player, Vector2 enemies[ENEMY_AMOUNT], GameState *state)
 {
     for (int i = 0; i < ENEMY_AMOUNT; i++)
     {
-        float dx = player->x - enemies[i].x;
-        float dy = player->y - enemies[i].y;
-        float dist = sqrt(pow(dx, 2) + pow(dy, 2));
+        float dx = player->pos.x - enemies[i].x;
+        float dy = player->pos.y - enemies[i].y;
+        float dist = calculateDistanceToPlayer(player, enemies[i]);
 
         if (dist < ENEMY_KILL_DIST)
         {
@@ -94,20 +103,20 @@ void updateEnemies(const GameMap *map, Vector3 *player, Vector2 enemies[ENEMY_AM
     }
 }
 
-void fire(const GameMap *map, Vector3 *player, Vector2 enemies[ENEMY_AMOUNT])
+void fire(const GameMap *map, Player *player, Vector2 enemies[ENEMY_AMOUNT])
 {
     float distanceToWall = 0;
     int hitWall = 0;
     int hitEnemy = 0;
 
-    float eyeX = cosf(player->z);
-    float eyeY = sinf(player->z);
+    float eyeX = cosf(player->angle);
+    float eyeY = sinf(player->angle);
 
     while (!hitEnemy && !hitWall && distanceToWall < MAX_DEPTH)
     {
         distanceToWall += 0.1f;
-        float testfX = player->x + eyeX * distanceToWall;
-        float testfY = player->y + eyeY * distanceToWall;
+        float testfX = player->pos.x + eyeX * distanceToWall;
+        float testfY = player->pos.y + eyeY * distanceToWall;
         int testX = (int)testfX;
         int testY = (int)testfY;
 
@@ -122,7 +131,8 @@ void fire(const GameMap *map, Vector3 *player, Vector2 enemies[ENEMY_AMOUNT])
                 if (distToEnemy < SHOOT_RANGE)
                 {
                     hitEnemy = 1;
-                    respawnEnemy(map, &(enemies[i]));
+                    player->score++;
+                    respawnEnemy(map, &(enemies[i]), player);
                     break;
                 }
             }
@@ -141,11 +151,10 @@ void fire(const GameMap *map, Vector3 *player, Vector2 enemies[ENEMY_AMOUNT])
 
 void updateGame(
     GameMap *map,
-    Vector3 *player,
+    Player *player,
     Vector2 enemies[ENEMY_AMOUNT],
     const InputState *input,
-    float deltaTime,
-	GameState* state)
+    GameState *state)
 {
     if (input->w)
     {
@@ -157,15 +166,16 @@ void updateGame(
     }
     if (input->a)
     {
-        rotatePlayer(player, -ROT_SPEED * deltaTime);
+        rotatePlayer(player, -ROT_SPEED * DELTA_TIME);
     }
     if (input->d)
     {
-        rotatePlayer(player, ROT_SPEED * deltaTime);
+        rotatePlayer(player, ROT_SPEED * DELTA_TIME);
     }
-    if (input->e)
+    if (input->e && player->cooldown <= 0)
     {
         fire(map, player, enemies);
+        player->cooldown = FIRE_CD_MS;
     }
 
     updateEnemies(map, player, enemies, state);

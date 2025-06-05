@@ -211,7 +211,7 @@ void render_menu(ConsoleBuffer* cb, int score, int menuChoice){
 	overlayText(cb, GAME_NAME, pos, YELLOW);
 	pos.Y += 2;
 	
-	if (score){
+	if (score >= 0){
 		overlayText(cb, "YOU ARE DEAD!", pos, RED);
 		pos.Y++;
 		

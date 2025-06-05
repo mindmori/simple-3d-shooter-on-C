@@ -60,7 +60,6 @@ GameMap *createDefaultMap()
 	return map;
 }
 
-
 GameMap *loadMapFromFile(const char *filename)
 {
 	FILE *file = fopen(filename, "r");
@@ -126,6 +125,11 @@ GameMap *loadMapFromFile(const char *filename)
 			free(map);
 			return createDefaultMap();
 		}
+	}
+
+	if (map->width < 12 || map->height < 12)
+	{
+		return createDefaultMap();
 	}
 
 	// READ MAP
