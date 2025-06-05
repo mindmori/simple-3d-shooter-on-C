@@ -47,7 +47,7 @@ int main() {
     	switch (state){
     		
     		case INIT:
-    			initConsoleBuffer(&cb, 120, 30);
+    			initConsoleBuffer(&cb);
     			clearBuffer(&cb, ' ', WHITE);
     			map = *loadMapFromFile("map.txt");
     			initializeGame(&map, &player, enemy);
@@ -63,6 +63,10 @@ int main() {
 				
 			case MENU:
 				update_input(&input);
+//				sprintf(testStr, "%lf", btnCD);
+//				overlayText(&cb, testStr, (COORD) {0, 0}, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+//				sprintf(testStr, "%c%c", input.w ? 'W' : '-', input.s ? 'S' : '-');
+//				overlayText(&cb, testStr, (COORD) {0, 1}, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 				if (input.e){
 					if(!menuChoice)
 						state = RUNNING;
@@ -82,7 +86,7 @@ int main() {
 				break;
 			
 			case RUNNING:
-    			render_frame(&cb, player.pos, player.angle, player.score, map, enemy);
+    			render_frame(&cb, player, map, enemy);
         		update_input(&input);
         		updateGame(&map, &player, enemy, &input, &state);
         

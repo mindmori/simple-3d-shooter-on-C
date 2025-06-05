@@ -13,9 +13,9 @@ typedef struct {
     SMALL_RECT region;
 } ConsoleBuffer;
 
-int initConsoleBuffer(ConsoleBuffer* cb, SHORT width, SHORT height);
+int initConsoleBuffer(ConsoleBuffer* cb);
 
-void render_frame(ConsoleBuffer* cb, Vector2 pos, float angle, int score, GameMap map, Vector2* enemy);
+void render_frame(ConsoleBuffer* cb, Player player, GameMap map, Vector2* enemy);
 
 void clearBuffer(ConsoleBuffer* cb, CHAR c, WORD attr);
 

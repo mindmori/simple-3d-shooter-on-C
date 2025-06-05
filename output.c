@@ -7,8 +7,40 @@
 #include <string.h>
 #include <stdio.h>
 
-int initConsoleBuffer(ConsoleBuffer* cb, SHORT width, SHORT height) {
+static int resizeToWindow(ConsoleBuffer* cb) {
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo(cb->hConsole, &csbi)) {
+        return 0;
+    }
+
+    SHORT newWidth  = csbi.srWindow.Right  - csbi.srWindow.Left + 1;
+    SHORT newHeight = csbi.srWindow.Bottom - csbi.srWindow.Top  + 1;
+
+    if (cb->size.X == newWidth && cb->size.Y == newHeight) {
+        return 1;
+    }
+
+    for (int i = 0; i < 2; ++i) {
+        free(cb->buffers[i]);
+        cb->buffers[i] = NULL;
+    }
+
+    cb->size.X = newWidth;
+    cb->size.Y = newHeight;
+    cb->region = (SMALL_RECT){0, 0, newWidth - 1, newHeight - 1};
+
+    for (int i = 0; i < 2; ++i) {
+        cb->buffers[i] = (CHAR_INFO*)malloc(newWidth * newHeight * sizeof(CHAR_INFO));
+        if (!cb->buffers[i]) return 0;
+    }
+
+    return 1;
+}
+
+int initConsoleBuffer(ConsoleBuffer* cb) {
     cb->hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    int width = 120;
+    int height = 30;
     cb->size.X = width;
     cb->size.Y = height;
     cb->region = (SMALL_RECT){0, 0, width - 1, height - 1};
@@ -19,7 +51,8 @@ int initConsoleBuffer(ConsoleBuffer* cb, SHORT width, SHORT height) {
         cb->buffers[i] = (CHAR_INFO*)malloc(width * height * sizeof(CHAR_INFO));
         if (!cb->buffers[i]) return 0;
     }
-
+    
+	resizeToWindow(cb);
     return 1;
 }
 
@@ -84,36 +117,6 @@ void freeConsoleBuffer(ConsoleBuffer* cb) {
     for (i = 0; i < 2; ++i) {
         if (cb->buffers[i]) free(cb->buffers[i]);
     }
-}
-
-static int resizeToWindow(ConsoleBuffer* cb) {
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (!GetConsoleScreenBufferInfo(cb->hConsole, &csbi)) {
-        return 0;
-    }
-
-    SHORT newWidth  = csbi.srWindow.Right  - csbi.srWindow.Left + 1;
-    SHORT newHeight = csbi.srWindow.Bottom - csbi.srWindow.Top  + 1;
-
-    if (cb->size.X == newWidth && cb->size.Y == newHeight) {
-        return 1;
-    }
-
-    for (int i = 0; i < 2; ++i) {
-        free(cb->buffers[i]);
-        cb->buffers[i] = NULL;
-    }
-
-    cb->size.X = newWidth;
-    cb->size.Y = newHeight;
-    cb->region = (SMALL_RECT){0, 0, newWidth - 1, newHeight - 1};
-
-    for (int i = 0; i < 2; ++i) {
-        cb->buffers[i] = (CHAR_INFO*)malloc(newWidth * newHeight * sizeof(CHAR_INFO));
-        if (!cb->buffers[i]) return 0;
-    }
-
-    return 1;
 }
 
 static int checkWall(int x, int y, GameMap map) {
@@ -186,15 +189,16 @@ static void render_game_frame(ConsoleBuffer* cb, Vector2 pos, float angle, GameM
     }
 }
 
-void render_frame(ConsoleBuffer* cb, Vector2 pos, float angle, int score, GameMap map, Vector2* enemy){
+void render_frame(ConsoleBuffer* cb, Player player, GameMap map, Vector2* enemy){
 	resizeToWindow(cb);
-	render_game_frame(cb, pos, angle, map, enemy);
+	render_game_frame(cb, player.pos, player.angle, map, enemy);
 	char scoreStr[16];
-	snprintf(scoreStr, sizeof(scoreStr), "Score: %d", score);
+	snprintf(scoreStr, sizeof(scoreStr), "Score: %d", player.score);
 //	char timeStr[8];
 //	snprintf(timeStr, sizeof(timeStr), "%d", time);
 	overlayText(cb, scoreStr, (COORD){0, 0}, FOREGROUND_RED | FOREGROUND_GREEN);
 //	overlayText(cb, timeStr, (COORD){0, cb->size.Y - 1}, FOREGROUND_RED | FOREGROUND_GREEN);
+	setCharAt(cb, cb->size.X / 2, cb->size.Y / 2, '+', player.cooldown <= 0 ? GREEN : YELLOW);
 	renderBuffer(cb);
 }
 
