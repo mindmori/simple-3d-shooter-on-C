@@ -3,8 +3,11 @@
 #ifndef DATA_H
 #define DATA_H
 
+#define GAME_NAME "SIMPLE SHOOTER ON C"
+#define MENU_CD_MS 100.0f
 #define FPS 60
 #define FRAME_TIME_MS (1000.0f / FPS)
+#define DELTA_TIME 1.0f / FPS
 #define MAP_WIDTH 16
 #define MAP_HEIGHT 16
 #define FOV (M_PI / 4.0f)
@@ -20,6 +23,10 @@
 #define ENEMY_KILL_DIST 0.05f
 #define SHOOT_RANGE 0.3f
 
+#define WHITE FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
+#define RED FOREGROUND_RED | FOREGROUND_INTENSITY
+#define YELLOW FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY
+
 typedef struct{
 	float x;
 	float y;
@@ -30,6 +37,14 @@ typedef struct{
 	float y;
 	float z;
 } Vector3;
+
+typedef enum {
+	INIT,
+	REINIT,
+	MENU,
+	RUNNING,
+	DEAD
+} GameState;
 
 
 #endif

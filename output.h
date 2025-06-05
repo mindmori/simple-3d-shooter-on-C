@@ -1,15 +1,28 @@
-#include "data.h"
 #include <windows.h>
+#include "data.h"
 #include "gamemap.h"
 
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef OUTPUT_H
+#define OUTPUT_H
 
-void render_frame(
-	const HANDLE buffer, 
-	const Vector3 player, 
-	GameMap map,
-	const Vector2 enemy[ENEMY_AMOUNT]
-);
+typedef struct {
+    HANDLE hConsole;
+    CHAR_INFO* buffers[2];
+    int activeIndex;
+    COORD size;
+    SMALL_RECT region;
+} ConsoleBuffer;
+
+int initConsoleBuffer(ConsoleBuffer* cb, SHORT width, SHORT height);
+
+void render_frame(ConsoleBuffer* cb, Vector2 pos, float angle, int score, GameMap map, Vector2* enemy);
+
+void clearBuffer(ConsoleBuffer* cb, CHAR c, WORD attr);
+
+void render_menu(ConsoleBuffer* cb, int score, int menuChoice);
+
+void overlayText(ConsoleBuffer* cb, const char* text, COORD pos, WORD attr);
+
+void freeConsoleBuffer(ConsoleBuffer* cb);
 
 #endif

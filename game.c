@@ -67,7 +67,7 @@ void movePlayerInDirection(const GameMap *map, Vector3 *player, int direction)
     }
 }
 
-void updateEnemies(const GameMap *map, Vector3 *player, Vector2 enemies[ENEMY_AMOUNT])
+void updateEnemies(const GameMap *map, Vector3 *player, Vector2 enemies[ENEMY_AMOUNT], GameState* state)
 {
     for (int i = 0; i < ENEMY_AMOUNT; i++)
     {
@@ -77,7 +77,7 @@ void updateEnemies(const GameMap *map, Vector3 *player, Vector2 enemies[ENEMY_AM
 
         if (dist < ENEMY_KILL_DIST)
         {
-            // TODO: PLAYER DEATH
+            *state = REINIT;
             return;
         }
 
@@ -144,7 +144,8 @@ void updateGame(
     Vector3 *player,
     Vector2 enemies[ENEMY_AMOUNT],
     const InputState *input,
-    float deltaTime)
+    float deltaTime,
+	GameState* state)
 {
     if (input->w)
     {
@@ -167,5 +168,5 @@ void updateGame(
         fire(map, player, enemies);
     }
 
-    updateEnemies(map, player, enemies);
+    updateEnemies(map, player, enemies, state);
 }

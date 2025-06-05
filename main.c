@@ -7,75 +7,97 @@
 #include "gamemap.h"
 #include "game.h"
 
+void quit(){
+	PostMessage(GetConsoleWindow(), WM_CLOSE, 0, 0);
+}
+
 int main() {
+    char testStr[8];
 	
 	
 	//game vars
-    Vector3 player = {7.0f, 7.0f, 0.0f};
+    Player player;
+    Vector3 playerV;
     Vector2 enemy[ENEMY_AMOUNT] = {
     	{7.0f, 14.0f},
     	{0.0f, 0.0f},
     	{0.0f, 0.0f}
 	};
+	int finalScore;
 	GameMap map;
-//	char map[MAP_HEIGHT][MAP_WIDTH] = {
-//    	"################",
-//    	"#..............#",
-//    	"#.......########",
-//    	"#..............#",
-//    	"#......##......#",
-//    	"#......##......#",
-//    	"#..............#",
-//    	"###............#",
-//    	"##.............#",
-//    	"#......####..###",
-//    	"#......#.......#",
-//    	"#......#.......#",
-//    	"#..............#",
-//    	"#......#########",
-//    	"#..............#",
-//    	"################"
-//	};
+	GameState state;
+	int menuChoice = 0;
+	float btnCD = MENU_CD_MS;
 	
 	
 	//timer vars
 	LARGE_INTEGER freq, start, end;
 	QueryPerformanceFrequency(&freq);
-	float elapsed;
+	float elapsed = 0;
+	
 	
 	//output/input vars
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    HANDLE hBuffer[2];
-    int currentBuffer = 0, backBuffer;
-    DWORD dwBytesWritten = 0;
     InputState input;
+    ConsoleBuffer cb;
     
     
-    //buffers init
-    hBuffer[0] = CreateConsoleScreenBuffer(GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-    hBuffer[1] = CreateConsoleScreenBuffer(GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-    SetConsoleActiveScreenBuffer(hBuffer[0]);
-    
-    map = *loadMapFromFile("map.txt");
-    initializeGame(&map, &player, enemy);
-
     //main game loop
+    state = INIT;
     while (1) {
     	QueryPerformanceCounter(&start);
-    	
-    	backBuffer = 1 - currentBuffer;
+    	switch (state){
+    		
+    		case INIT:
+    			initConsoleBuffer(&cb, 120, 30);
+    			clearBuffer(&cb, ' ', WHITE);
+    			map = *loadMapFromFile("map.txt");
+    			initializeGame(&map, &playerV, enemy);
+    			state = MENU;
+    			finalScore = 0;
+				break;
+			
+			case REINIT:
+				initializeGame(&map, &playerV, enemy);
+				clearBuffer(&cb, ' ', WHITE);
+				state = MENU;
+				break;
+				
+			case MENU:
+				update_input(&input);
+				if (input.e){
+					if(!menuChoice)
+						state = RUNNING;
+					else{
+						freeConsoleBuffer(&cb);
+						return 0;
+					}
+						
+				}
+				
+				if ((input.w || input.s) && btnCD <= 0){
+					menuChoice = 1 - menuChoice;
+					btnCD = MENU_CD_MS;
+				}
+				
+				render_menu(&cb, finalScore, menuChoice);
+				break;
+			
+			case RUNNING:
+    			finalScore = 1;
+    			render_frame(&cb, player.pos, player.angle, player.score, map, enemy);
+        		update_input(&input);
+        		updateGame(&map, &playerV, enemy, &input, DELTA_TIME, &state);
         
-        render_frame(hBuffer[backBuffer], player, map, enemy);
-        update_input(&input);
-        updateGame(&map, &player, enemy, &input, FRAME_TIME_MS / 1000.0f);
-
-        SetConsoleActiveScreenBuffer(hBuffer[backBuffer]);
-        currentBuffer = backBuffer;
-        
-        
-        //framerate control
-        QueryPerformanceCounter(&end);
+        		player.pos = (Vector2) {playerV.x, playerV.y};
+        		player.angle = playerV.z;
+    			break;
+		}
+		
+		//framerate control
+		QueryPerformanceCounter(&end);
         elapsed = (end.QuadPart - start.QuadPart) * 1000.0f / freq.QuadPart;
+        if (btnCD > 0)
+        	btnCD -= FRAME_TIME_MS;
         if (elapsed < FRAME_TIME_MS)
     		Sleep(FRAME_TIME_MS - elapsed);
     }
