@@ -127,11 +127,6 @@ GameMap *loadMapFromFile(const char *filename)
 		}
 	}
 
-	if (map->width < 12 || map->height < 12)
-	{
-		return createDefaultMap();
-	}
-
 	// READ MAP
 
 	rewind(file);

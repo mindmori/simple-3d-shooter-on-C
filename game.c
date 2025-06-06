@@ -30,11 +30,19 @@ double calculateDistanceToPlayer(Player *player, Vector2 enemy)
 
 void respawnEnemy(const GameMap *map, Vector2 *enemy, Player *player)
 {
+    int attemptCount = 0;
+    const int maxAttempts = 1000;
+    float minDistance = map->width / 3.0f;
+
     do
     {
-        enemy->x = 2.0f + rand() % (map->width - 4);
-        enemy->y = 2.0f + rand() % (map->height - 4);
-    } while (!canMove(map, enemy->x, enemy->y) || (calculateDistanceToPlayer(player, *enemy) < map->width / 3));
+        enemy->x = (float)(rand() % map->width) + 0.5f; 
+        enemy->y = (float)(rand() % map->height) + 0.5f;
+
+        attemptCount++;
+
+    } while (!canMove(map, enemy->x, enemy->y) || 
+             !((calculateDistanceToPlayer(player, *enemy) <= minDistance || attemptCount < maxAttempts)));
 }
 
 void initializeGame(GameMap *map, Player *player, Vector2 enemies[ENEMY_AMOUNT])
@@ -74,7 +82,6 @@ void movePlayerInDirection(const GameMap *map, Player *player, int direction)
         player->pos.y = newY;
     }
 }
-
 
 void updateEnemies(const GameMap *map, Player *player, Vector2 enemies[ENEMY_AMOUNT], GameState *state)
 {
